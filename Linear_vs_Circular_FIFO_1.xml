@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://www.plcopen.org/xml/tc6_0201" xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:ns1="http://www.plcopen.org/xml/tc6_0201">
+  <fileHeader companyName="Unknown" productName="Unnamed" productVersion="1" creationDateTime="2026-02-02T14:07:16"/>
+  <contentHeader name="Unnamed" modificationDateTime="2026-02-02T14:07:16">
+    <coordinateInfo>
+      <fbd>
+        <scaling x="16" y="16"/>
+      </fbd>
+      <ld>
+        <scaling x="16" y="16"/>
+      </ld>
+      <sfc>
+        <scaling x="16" y="16"/>
+      </sfc>
+    </coordinateInfo>
+  </contentHeader>
+  <types>
+    <dataTypes/>
+    <pous>
+      <pou name="Circular_queue" pouType="functionBlock">
+        <interface>
+          <inputVars>
+            <variable name="XPush">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="XPop">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="iInputVal">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+          </inputVars>
+          <outputVars>
+            <variable name="iOutputVal">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="iCount">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Operation_Cost">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+          </outputVars>
+          <localVars>
+            <variable name="Buffer">
+              <type>
+                <derived name="ARRAY [0..4999] OF INT"/>
+              </type>
+            </variable>
+            <variable name="Head">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Tail">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="MaxLen">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="R_Trig_Push">
+              <type>
+                <derived name="R_TRIG"/>
+              </type>
+            </variable>
+            <variable name="R_Trig_Pop">
+              <type>
+                <derived name="R_TRIG"/>
+              </type>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml:p><![CDATA[(* Edge Detection *)
+R_Trig_Push(CLK := xPush);
+R_Trig_Pop(CLK := xPop);
+
+(* initialize MaxLen if 0 (safety check) *)
+MaxLen := 5000;
+
+(* --- PUSH (Enqueue) --- *)
+IF R_Trig_Push.Q THEN
+    (* Only push if not full (Optional safety, but good practice) *)
+    IF iCount < MaxLen THEN
+        Buffer[Head] := iInputVal;
+        Head := Head + 1;
+        IF Head >= MaxLen THEN Head := 0; END_IF;
+        
+        (* DIRECT COUNTING - The Fix *)
+        iCount := iCount + 1; 
+    END_IF;
+END_IF;
+
+(* --- POP (Dequeue) --- *)
+IF R_Trig_Pop.Q AND iCount > 0 THEN
+    iOutputVal := Buffer[Tail];
+    Tail := Tail + 1;
+    IF Tail >= MaxLen THEN Tail := 0; END_IF;
+    
+    (* DIRECT COUNTING - The Fix *)
+    iCount := iCount - 1;
+    Operation_Cost := 0; 
+END_IF;]]></xhtml:p>
+          </ST>
+        </body>
+        <documentation>
+          <xhtml:p><![CDATA[ ]]></xhtml:p>
+        </documentation>
+      </pou>
+      <pou name="FB_FIFO" pouType="functionBlock">
+        <interface>
+          <inputVars>
+            <variable name="XPush">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="XPop">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="iInputVal">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+          </inputVars>
+          <outputVars>
+            <variable name="iOutputVal">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="iCount">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Operation_Cost">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+          </outputVars>
+          <localVars>
+            <variable name="Buffer">
+              <type>
+                <derived name="ARRAY [0..4999] OF INT"/>
+              </type>
+            </variable>
+            <variable name="i">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="R_Trig_Push">
+              <type>
+                <derived name="R_TRIG"/>
+              </type>
+            </variable>
+            <variable name="R_Trig_Pop">
+              <type>
+                <derived name="R_TRIG"/>
+              </type>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml:p><![CDATA[(* Edge Detection *)
+R_Trig_Push(CLK := xPush);
+R_Trig_Pop(CLK := xPop);
+
+(* --- PUSH (FFL) --- *)
+(* Simply add to the end. This part is actually fast (O(1)) *)
+IF R_Trig_Push.Q AND iCount < 5000 THEN
+    Buffer[iCount] := iInputVal;
+    iCount := iCount + 1;
+END_IF;
+
+(* --- POP (FFU) - THE EXPENSIVE PART --- *)
+(* This simulates the AB FFU shifting mechanism *)
+IF R_Trig_Pop.Q AND iCount > 0 THEN
+    
+    (* 1. Grab the value at Head (Index 0) *)
+    iOutputVal := Buffer[0];
+    
+    (* 2. THE SHIFT LOOP (The "Bad" Part) *)
+    (* We must physically move every item down one slot *)
+    (* If you have 50 items, this loop runs 49 times! *)
+    
+    FOR i := 0 TO iCount - 2 DO
+        Buffer[i] := Buffer[i+1]; (* Move data from i+1 to i *)
+        
+        (* Increment the "Cost" Counter to visualize the inefficiency *)
+        Operation_Cost := Operation_Cost + 1; 
+    END_FOR;
+
+    (* 3. Clear the last slot (optional, but clean) *)
+    Buffer[iCount - 1] := 0;
+
+    (* 4. Decrement Count *)
+    iCount := iCount - 1;
+    
+END_IF;]]></xhtml:p>
+          </ST>
+        </body>
+        <documentation>
+          <xhtml:p><![CDATA[ ]]></xhtml:p>
+        </documentation>
+      </pou>
+      <pou name="main" pouType="program">
+        <interface>
+          <localVars>
+            <variable name="My_Bad_FIFO">
+              <type>
+                <derived name="FB_FIFO"/>
+              </type>
+            </variable>
+            <variable name="My_Good_FIFO">
+              <type>
+                <derived name="CIRCULAR_QUEUE"/>
+              </type>
+            </variable>
+            <variable name="pb_Push">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="pb_Pop">
+              <type>
+                <BOOL/>
+              </type>
+            </variable>
+            <variable name="Input_Data">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Output_Bad" address="%QW1">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Output_Good" address="%QW4">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Test_value" address="%QW5">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Queue_Count" address="%QW0">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Shift_Counter" address="%QW3">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Shift_Counter_Good" address="%QW2">
+              <type>
+                <INT/>
+              </type>
+            </variable>
+            <variable name="Auto_TImer">
+              <type>
+                <derived name="TON"/>
+              </type>
+            </variable>
+            <variable name="Test_Step">
+              <type>
+                <INT/>
+              </type>
+              <initialValue>
+                <simpleValue value="0"/>
+              </initialValue>
+            </variable>
+            <variable name="Auto_Start">
+              <type>
+                <BOOL/>
+              </type>
+              <initialValue>
+                <simpleValue value="FALSE"/>
+              </initialValue>
+            </variable>
+            <variable name="Fill_Queue_Now">
+              <type>
+                <BOOL/>
+              </type>
+              <initialValue>
+                <simpleValue value="FALSE"/>
+              </initialValue>
+            </variable>
+            <variable name="i">
+              <type>
+                <INT/>
+              </type>
+              <initialValue>
+                <simpleValue value="0"/>
+              </initialValue>
+            </variable>
+            <variable name="Queue_Count_Good">
+              <type>
+                <INT/>
+              </type>
+              <initialValue>
+                <simpleValue value="0"/>
+              </initialValue>
+            </variable>
+          </localVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml:p><![CDATA[(* ============================================================= *)
+(* ZONE 1: THE STRESS TEST LOADER (Instant Fill) *)
+(* ============================================================= *)
+(* This logic only runs ONCE when you force 'Fill_Queue_Now' to TRUE. *)
+(* It pauses the scan cycle, stuffs 5,000 items into the queues, *)
+(* and then releases the PLC back to normal operation. *)
+
+IF Fill_Queue_Now THEN
+    
+    (* Loop from 1 to 5000 to fill the array completely *)
+    FOR i := 1 TO 5000 DO
+        
+        (* 1. SIMULATE RISING EDGE (Push Button Press) *)
+        (* We call the FBs directly here to force the data in *)
+        My_Bad_FIFO(xPush := TRUE, xPop := FALSE, iInputVal := i);
+        My_Good_FIFO(xPush := TRUE, xPop := FALSE, iInputVal := i);
+        
+        (* 2. SIMULATE FALLING EDGE (Push Button Release) *)
+        (* We must call them again with FALSE to reset the trigger for the next loop iteration *)
+        My_Bad_FIFO(xPush := FALSE, xPop := FALSE, iInputVal := i);
+        My_Good_FIFO(xPush := FALSE, xPop := FALSE, iInputVal := i);
+        
+    END_FOR;
+    
+    (* Reset the trigger so it doesn't run forever *)
+    Fill_Queue_Now := FALSE;
+    
+END_IF;
+
+
+(* ============================================================= *)
+(* ZONE 2: NORMAL OPERATION (Manual Pop) *)
+(* ============================================================= *)
+(* This runs every single scan cycle. It listens to your manual *)
+(* 'pb_Pop' button so you can trigger the unloads when ready. *)
+
+(* Call the Bad FIFO (Linear Shift) *)
+My_Bad_FIFO(
+    xPush := pb_Push,      (* Normal button control *)
+    xPop := pb_Pop,        (* Normal button control *)
+    iInputVal := Input_Data,
+    iOutputVal => Output_Bad,
+    iCount => Queue_Count,
+    Operation_Cost => Shift_Counter
+);
+
+(* Call the Good FIFO (Circular Buffer) *)
+My_Good_FIFO(
+    xPush := pb_Push,
+    xPop := pb_Pop,
+    iInputVal := Input_Data,
+    iOutputVal => Output_Good,
+    iCount => Queue_Count_Good,
+    Operation_Cost => Shift_Counter_Good
+);]]></xhtml:p>
+          </ST>
+        </body>
+        <documentation>
+          <xhtml:p><![CDATA[ ]]></xhtml:p>
+        </documentation>
+      </pou>
+    </pous>
+  </types>
+  <instances>
+    <configurations>
+      <configuration name="Config0">
+        <resource name="Res0">
+          <task name="task0" priority="1" interval="T#20ms">
+            <pouInstance name="instance0" typeName="main"/>
+          </task>
+        </resource>
+      </configuration>
+    </configurations>
+  </instances>
+</project>

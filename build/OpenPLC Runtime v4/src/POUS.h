@@ -1,0 +1,87 @@
+#ifndef __POUS_H
+#define __POUS_H
+
+#include "accessor.h"
+#include "iec_std_lib.h"
+
+__DECLARE_ARRAY_TYPE_WRAPPER(__ARRAY_OF_INT_5000,INT,[5000])
+// FUNCTION_BLOCK CIRCULAR_QUEUE
+// Data part
+typedef struct {
+  // FB Interface - IN, OUT, IN_OUT variables
+  __DECLARE_VAR(BOOL,EN)
+  __DECLARE_VAR(BOOL,ENO)
+  __DECLARE_VAR(BOOL,XPUSH)
+  __DECLARE_VAR(BOOL,XPOP)
+  __DECLARE_VAR(INT,IINPUTVAL)
+  __DECLARE_VAR(INT,IOUTPUTVAL)
+  __DECLARE_VAR(INT,ICOUNT)
+  __DECLARE_VAR(INT,OPERATION_COST)
+
+  // FB private variables - TEMP, private and located variables
+  __DECLARE_VAR(__ARRAY_OF_INT_5000,BUFFER)
+  __DECLARE_VAR(INT,HEAD)
+  __DECLARE_VAR(INT,TAIL)
+  __DECLARE_VAR(INT,MAXLEN)
+  R_TRIG R_TRIG_PUSH;
+  R_TRIG R_TRIG_POP;
+
+} CIRCULAR_QUEUE;
+
+void CIRCULAR_QUEUE_init__(CIRCULAR_QUEUE *data__, BOOL retain);
+// Code part
+void CIRCULAR_QUEUE_body__(CIRCULAR_QUEUE *data__);
+// FUNCTION_BLOCK FB_FIFO
+// Data part
+typedef struct {
+  // FB Interface - IN, OUT, IN_OUT variables
+  __DECLARE_VAR(BOOL,EN)
+  __DECLARE_VAR(BOOL,ENO)
+  __DECLARE_VAR(BOOL,XPUSH)
+  __DECLARE_VAR(BOOL,XPOP)
+  __DECLARE_VAR(INT,IINPUTVAL)
+  __DECLARE_VAR(INT,IOUTPUTVAL)
+  __DECLARE_VAR(INT,ICOUNT)
+  __DECLARE_VAR(INT,OPERATION_COST)
+
+  // FB private variables - TEMP, private and located variables
+  __DECLARE_VAR(__ARRAY_OF_INT_5000,BUFFER)
+  __DECLARE_VAR(INT,I)
+  R_TRIG R_TRIG_PUSH;
+  R_TRIG R_TRIG_POP;
+
+} FB_FIFO;
+
+void FB_FIFO_init__(FB_FIFO *data__, BOOL retain);
+// Code part
+void FB_FIFO_body__(FB_FIFO *data__);
+// PROGRAM MAIN
+// Data part
+typedef struct {
+  // PROGRAM Interface - IN, OUT, IN_OUT variables
+
+  // PROGRAM private variables - TEMP, private and located variables
+  FB_FIFO MY_BAD_FIFO;
+  CIRCULAR_QUEUE MY_GOOD_FIFO;
+  __DECLARE_VAR(BOOL,PB_PUSH)
+  __DECLARE_VAR(BOOL,PB_POP)
+  __DECLARE_VAR(INT,INPUT_DATA)
+  TON AUTO_TIMER;
+  __DECLARE_VAR(INT,TEST_STEP)
+  __DECLARE_VAR(BOOL,AUTO_START)
+  __DECLARE_VAR(BOOL,FILL_QUEUE_NOW)
+  __DECLARE_VAR(INT,I)
+  __DECLARE_VAR(INT,QUEUE_COUNT_GOOD)
+  __DECLARE_LOCATED(INT,OUTPUT_BAD)
+  __DECLARE_LOCATED(INT,OUTPUT_GOOD)
+  __DECLARE_LOCATED(INT,TEST_VALUE)
+  __DECLARE_LOCATED(INT,QUEUE_COUNT)
+  __DECLARE_LOCATED(INT,SHIFT_COUNTER)
+  __DECLARE_LOCATED(INT,SHIFT_COUNTER_GOOD)
+
+} MAIN;
+
+void MAIN_init__(MAIN *data__, BOOL retain);
+// Code part
+void MAIN_body__(MAIN *data__);
+#endif //__POUS_H
