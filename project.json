@@ -26,29 +26,6 @@
         "globalVariables": []
       }
     },
-    "debugVariables": {
-      "pous": {
-        "main": [
-          "My_Bad_FIFO",
-          "My_Good_FIFO",
-          "pb_Push",
-          "pb_Pop",
-          "Input_Data",
-          "Output_Bad",
-          "Output_Good",
-          "Test_value",
-          "Queue_Count",
-          "Shift_Counter",
-          "Shift_Counter_Good",
-          "Auto_TImer",
-          "Test_Step",
-          "Auto_Start",
-          "Fill_Queue_Now",
-          "i",
-          "Queue_Count_Good"
-        ]
-      }
-    },
     "deletedPous": []
   }
 }

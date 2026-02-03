@@ -41,7 +41,7 @@ Instead of moving data, this implementation moves the **pointers**. Using a Head
 | **Total CPU Operations** | **14,994** | **0** | **Pass** |
 
 > *Verification proof available in `/docs/Variables_Debugging.jpg`*
-![Debugging Variables](`/docs/Variables_Debugging.jpg`)
+![Debugging Variables](/docs/Variables_Debugging.jpg)
 
 ---
 
@@ -58,6 +58,29 @@ Instead of moving data, this implementation moves the **pointers**. Using a Head
 │   ├── main.st                    # Main program with Stress Test Logic
 │   ├── FB_FIFO.st                 # The inefficient Linear Shift Function Block
 │   ├── FB_CircularQueue.st        # The optimized Circular Function Block
-│   └── Linear_vs_Circular.xml     # PLCOpen XML Export (Importable to other IDEs)
 │
+├── Linear_vs_Circular_FIFO_1.xml  # OpenPLC XML Export (Compatible with other IDEs)
 └── README.md
+
+```
+
+## 🛠️ How to Run
+This project was developed in **OpenPLC Editor**, but the logic is standard IEC 61131-3 Structured Text and can be ported to CODESYS, TwinCAT, or Studio 5000.
+
+### Using OpenPLC:
+1.  Clone this repository.
+2.  Open **OpenPLC Editor**.
+3.  Go to `File > Import PLCOpen XML`.
+4.  Select `Linear_vs_Circular_FIFO_1.xml`.
+5.  Run the simulation.
+
+![OpenPLC in Action](/docs/OpenPLC_Test.jpg)
+
+### Running the Stress Test:
+1.  Start the Debugger.
+2.  Force `Fill_Queue_Now` to **TRUE**. (This instantly loads 5,000 items).
+3.  Monitor the variable `Shift_Counter` vs `Shift_Counter_Good`.
+4.  Toggle `pb_Pop` to observe the efficiency gap.
+
+---
+

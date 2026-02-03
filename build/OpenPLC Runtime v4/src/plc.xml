@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0201" xmlns:xsd="http://www.w3.org/2001/XMLSchema-instance" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:ns1="http://www.plcopen.org/xml/tc6_0201">
-  <fileHeader companyName="Unknown" productName="Unnamed" productVersion="1" creationDateTime="2026-02-02T13:00:13"/>
-  <contentHeader name="Unnamed" modificationDateTime="2026-02-02T13:00:13">
+  <fileHeader companyName="Unknown" productName="Unnamed" productVersion="1" creationDateTime="2026-02-03T08:09:14"/>
+  <contentHeader name="Unnamed" modificationDateTime="2026-02-03T08:09:14">
     <coordinateInfo>
       <fbd>
         <scaling x="16" y="16"/>
@@ -386,7 +386,7 @@ My_Good_FIFO(
     xPop := pb_Pop,
     iInputVal := Input_Data,
     iOutputVal => Output_Good,
-    iCount => Queue_Count_Good, (* <--- ADD THIS *)
+    iCount => Queue_Count_Good,
     Operation_Cost => Shift_Counter_Good
 );]]></xhtml:p>
           </ST>
