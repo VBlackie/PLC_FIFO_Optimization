@@ -6,7 +6,7 @@
 ![Status](https://img.shields.io/badge/Status-Validated-success)
 
 ## ⚡ Executive Summary
-This project demonstrates a high-performance memory management strategy for Industrial Control Systems (ICS). By replacing standard Linear Shift FIFO logic ($O(N)$) with a pointer-based Circular Buffer ($O(1)$), **memory write operations were reduced by >99.9%** in high-volume datasets.
+This project demonstrates a high-performance memory management strategy for Industrial Control Systems (ICS). By replacing standard Linear Shift FIFO logic (O(N)) with a pointer-based Circular Buffer (O(1)), **memory write operations were reduced by >99.9%** in high-volume datasets.
 
 This optimization ensures deterministic scan times and prevents watchdog faults in critical data logging applications.
 
@@ -40,7 +40,8 @@ Instead of moving data, this implementation moves the **pointers**. Using a Head
 | **Op Cost (Pop #3)** | 4,997 Writes | **0 Writes** | 🚀 |
 | **Total CPU Operations** | **14,994** | **0** | **Pass** |
 
-> *Verification proof available in `/docs/Stress_Test_Proof.png`*
+> *Verification proof available in `/docs/Variables_Debugging.jpg`*
+![Debugging Variables](`/docs/Variables_Debugging.jpg`)
 
 ---
 
